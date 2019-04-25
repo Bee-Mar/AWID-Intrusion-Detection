@@ -1,0 +1,10 @@
+resources/dataset.csv
+resources/min_dataset.csv
+desktop.ini
+.vscode/
+env
+src/src.Rproj
+src/.RData
+src/.Rhistory
+src/.Rproj.user
+.Rproj.user

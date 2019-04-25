@@ -1,0 +1,447 @@
+#+REVEAL_ROOT: http://cdn.jsdelivr.net/reveal.js/3.0.0/
+#+STARTUP: showall
+#+REVEAL_THEME: league
+#+REVEAL_TRANS: convex
+#+OPTIONS: toc:nil num:nil ^:nil
+#+MACRO: font @@html:<font size="$1">$2</font>@@
+
+#+DATE: 12/5/18
+#+AUTHOR: Paul Webster, Gabriel Madison, Brandon Marlowe, Mirza Baig
+
+* CIS 660 - Final Project
+
+* AWID Anomaly Detection
+[[./images/AWID_box.png]]
+
+* Team
+- Paul Webster
+- Gabriel Madison
+- Brandon Marlowe
+- Mirza Baig
+
+#+BEGIN_NOTES
+Add speaker notes wherever needed using these tags
+#+END_NOTES
+
+* AWID (Aegean Wi-fi Intrusion) Dataset
+** Dataset produced from real Wireless Network logging
+** Full dataset
+[[./images/full_set.png]]
+- ~ 160,000,000 Rows x 155 Columns
+** Reduced Training Set Used
+[[./images/reduced_set.png]]
+- ~ 1.8 Million Rows x 155 Columns
+- Produced from 1 hour of logging
+** Majority of data is of "normal" class in either dataset
+
+* Project Goal
+** Build a classifier capable of properly classifying tuples with four specific attack types:
+| Amok                       |
+| Deauthentication           |
+| Authentication Request     |
+| ARP                        |
+** 3 Major Tasks
+- Preprocessing/Cleaning
+- Feature Selection
+- Classification
+
+* About the Attacks
+** Deauthentication
+*** A Denial of Service attack that uses unprotected deauthentication packets to spoof an entity. The attacker monitors traffic on a network to discover MAC addresses associated with specific clients. A deauthentication message is then sent to the access point on behalf of a particular MAC address, which forces that client off the network. The attacker then connects to the access point as the client that was previously disconnected.
+** Authentication Request
+*** A type of Flooding Attack -> "In this case the aggressor attempts to exhaust the AP’s resources by causing overflow to its client association table. It is based on the fact that the maximum number of clients which can be maintained in the client AP’s association table is limited and depends either on a hard-coded value on the AP or on its physical memory constraints. An entry on the AP’s client association table is inserted upon the receipt of an Authentication Request message even if the client does not complete its authentication (i.e., is still in the unauthenticated/unassociated state)." - Intrusion Detection in 802.11 Networks: Empirical Evaluation of Threats and a Public Dataset
+** Amok
+*** Another flooding attack, similar to Authentication Request
+** ARP (Address Resolution Protocol)
+*** "In computer networking, ARP spoofing, ARP cache poisoning, or ARP poison routing, is a technique by which an attacker sends (spoofed) Address Resolution Protocol (ARP) messages onto a local area network. Generally, the aim is to associate the attacker's MAC address with the IP address of another host, such as the default gateway, causing any traffic meant for that IP address to be sent to the attacker instead." - Wikipedia
+
+
+* Preprocessing/Cleaning
+
+** Starting Point
+[[./images/original_dataset.png]]
+
+** Wireshark Column Names
+[[./images/wiresharkawid_attributes.png]]
+** Adding Wireshark Column Names
+#+BEGIN_SRC shell
+
+    [FILE: col_names.txt]
+
+    frame.interface_id
+    frame.dlt
+    frame.offset_shift
+
+    ...
+
+    wlan.qos.buf_state_indicated
+    data.len
+    class
+
+#+END_SRC
+
+#+BEGIN_SRC python
+  with open(Path(resource_dir, 'col_names.txt')) as cols_fp:
+      for line_num, name in enumerate(cols_fp):
+          col_names.append(name.rstrip())
+
+  data.columns = col_names
+#+END_SRC
+** After Appending Column Names
+[[./images/cols_appended.png]]
+
+** Dropped columns not listed on course webpage
+** Replaced ‘?’ with NaN values, then dropped columns with over 60% NaN values
+- removed 7 columns
+#+BEGIN_SRC python
+
+  ...
+
+  data = data.replace('?', np.nan)
+
+  ...
+
+  # If over 60% of the values in a column is null, remove it
+  prev_num_cols = len(data.columns)
+  data.dropna(axis='columns', thresh=len(data.index) * 0.40, inplace=True)
+  print("Removed " + str(prev_num_cols - len(data.columns)) +
+        " columns with all NaN values.")
+#+END_SRC
+
+** Drop the columns that have over 50% of its values as constant
+#+BEGIN_SRC python
+  for col in data:
+      if data[col].nunique() >= (len(data.index) * 0.50):
+          cols_to_drop.append(col)
+
+  data.drop(columns=cols_to_drop, inplace=True)
+#+END_SRC
+** Drop the rows with at least one NaN value in it
+- ~ 2000 rows
+#+BEGIN_SRC python
+  data.dropna(inplace=True)
+#+END_SRC
+
+** Output the relatively clean data to a new file
+#+BEGIN_SRC python
+  # Output the minimized and preprocessed dataset to a ZIP file
+  # (with no index column added)
+  data.to_csv(
+      Path(resource_dir, 'preproc_dataset.zip'),
+      sep=',',
+      index=False,
+      compression='zip')
+#+END_SRC
+
+** Perform min-max normalization on attributes used for classification (range 0-1)
+
+#+BEGIN_SRC R
+  normalize <- function(x) { return ((x - min(x)) / (max(x) - min(x)))  }
+
+  ...
+
+  wifiLog2$wlan.fc.type=normalize(as.numeric(wifiLog2$wlan.fc.type))
+
+  wifiLog2$frame.time_delta_displayed=normalize(as.numeric(
+      wifiLog2$frame.time_delta_displayed
+  ))
+
+  wifiLog2$wlan.duration=normalize(as.numeric(wifiLog2$wlan.duration))
+  View(wifiLog2)
+#+END_SRC
+
+** Normalization Output
+[[./images/view_wifilog2.png]]
+
+* Feature Selection
+** We attempted PCA, but ran out of memory
+#+ATTR_REVEAL: :frag (appear)
+...even on CSU's Big Data Servers
+** We examined distinct values in remaining columns, and chose those with more distinct values for the normal class value than the attack class values
+** Using a little SQL magic...
+#+BEGIN_SRC sql
+  select count(DISTINCT(wlan_fc_moredata))
+    from AWID_REMOVED_NULL where class='normal'
+
+  select count(DISTINCT(wlan_fc_moredata))
+    from AWID_REMOVED_NULL where class='arp'
+
+  select count(DISTINCT(wlan_fc_moredata))
+    from AWID_REMOVED_NULL where class='amok'
+
+  select count(DISTINCT(wlan_fc_moredata))
+    from AWID_REMOVED_NULL where class='authentication_request'
+
+  select count(DISTINCT(wlan_fc_moredata))
+    from AWID_REMOVED_NULL where class='deauthentication'
+
+  select wlan_fc_moredata
+    from AWID_REMOVED_NULL where class='normal'
+#+END_SRC
+
+** Then, chose the following 3 columns for our analysis:
+| wlan.fc.type               |
+| frame.time_delta_displayed |
+| wlan.duration              |
+
+* Classification
+#+ATTR_REVEAL: :frag (appear)
+** Isolated the attack types
+#+BEGIN_SRC R
+
+    ...
+
+    ATTACKTYPE<-"amok"
+
+    # Keep only the target class and the normal packets
+    wifiLog2<-wifiLog2[wifiLog2$class=="normal" | wifiLog2$class==ATTACKTYPE, ]
+
+    wifiLog2$class<-as.character(wifiLog2$class)
+    wifiLog2$class[wifiLog2$class=="normal"]<-as.character("0")
+    wifiLog2$class[wifiLog2$class==ATTACKTYPE]<-as.character("1")
+    wifiLog2$class<-as.factor(wifiLog2$class)
+
+   ...
+
+#+END_SRC
+
+** Separate files to handle each attack type
+[[./images/KNN_file_names.png]]
+
+** Partitioned dataset into 66.6% training data and 33.3% test data
+#+BEGIN_SRC R
+  smp_size <- floor(0.66 * nrow(wifiLog2))
+#+END_SRC
+
+** Performed SMOTE on training data
+- To create synthetic tuples of attack types
+#+BEGIN_SRC R
+  f<-formula("class~wlan.fc.type+frame.time_delta_displayed+wlan.duration")
+  train_smote<-SMOTE(f,train,perc.over=150,perc.under=90,k=3)
+  View(train_smote)
+#+END_SRC
+
+** K-Nearest Neighbor classifier to train model for each specific attack type
+#+BEGIN_SRC R
+  m<-kNN(f,train_smote,test_oversamp,norm=FALSE,k=5)
+#+END_SRC
+
+** Made predictions using the model on the test dataset
+
+* Parameter Selection/Interpretation
+** Recall - “completeness – what % of positive tuples did the classifier label as positive?”
+[[./images/recall_eq.PNG]]
+** Precision - “exactness – what % of tuples that the classifier labeled as positive are actually positive”
+[[./images/precision_eq.PNG]]
+** Recall and precision are inversely related measures, meaning as precision increases, recall decreases.
+** Accuracy and recall are inversely related in our case (for a majority of our data)
+
+* Results
+#+ATTR_REVEAL: :frag (appear)
+- Performed multiple tests for each attack
+** ARP (Address Resolution Protocol) (Test 1)
+*** ARP (Test 1) KNN Parameters
+- Smote.k = 3
+- knn.k = 5
+- smote.perc.over = 150
+- smote.perc.under = 90
+*** ARP (Test 1) - Confusion Matrix
+- N = 576,582
+|             | Predicted: NO | Predicted: YES | Total   |
+| Actual: NO  | 552,958       | 1,731          | 554,689 |
+| Actual: YES | 4             | 21,889         | 21,893  |
+| Total       | 552,962       | 23,620         |         |
+
+*** ARP (Test 1) - Anomaly Detection Metrics
+| False Positives | 1,731   |
+| True Positives  | 21,889  |
+| True Negatives  | 552,958 |
+| False Negatives | 4       |
+
+*** ARP (Test 1) - Anomaly Detection Metrics (Contd.)
+| Accuracy    | 99.6990% |
+| Error Rate  |  0.3009% |
+| Sensitivity | 92.6714% |
+| Specificity | 99.9992% |
+| Precision   | 92.6714% |
+| Recall      | 99.9817% |
+
+** Only one set of results with ARP
+- Too many errors using other settings
+- Difficult to improve on already extremely good results
+
+** Amok (Test 1)
+*** Amok (Test 1) KNN Parameters
+- Smote.k = 3
+- knn.k = 5
+- smote.perc.over = 150
+- smote.perc.under = 90
+
+*** Amok (Test 1) - Confusion Matrix
+- N = 565,216
+|             | Predicted: NO | Predicted: YES | Total   |
+| Actual: NO  | 511,451       | 42,928         | 554,379 |
+| Actual: YES | 562           | 10,275         | 10,837  |
+| Total       | 512,013       | 53,203         |         |
+
+*** Amok (Test 1) - Anomaly Detection Metrics
+| False Positives | 42,928  |
+| True Positives  | 10,275  |
+| True Negatives  | 511,451 |
+| False Negatives | 562     |
+
+*** Amok (Test 1) - Anomaly Detection Metrics (Contd.)
+| Accuracy    | 92.3056% |
+| Error Rate  |  7.6944% |
+| Sensitivity | 19.3128% |
+| Specificity | 99.8902% |
+| Precision   | 19.3128% |
+| Recall      | 94.8140% |
+
+** Amok (Test 2)
+*** Amok (Test 2) KNN Parameters
+- smote.k = 1
+- knn.k = 1
+- smote.perc.over = 120
+- smote.perc.under = 200
+
+*** Amok (Test 2) - Confusion Matrix
+- N = 565,216
+|             | Predicted: NO | Predicted: YES | Total   |
+| Actual: NO  | 529,906       | 24,473         | 554,379 |
+| Actual: YES | 1099          | 9,738          | 10,837  |
+| Total       | 531,005       | 34,211         |         |
+
+*** Amok (Test 2) - Anomaly Detection Metrics
+| False Positives | 24,473  |
+| True Positives  | 9,738   |
+| True Negatives  | 529,906 |
+| False Negatives | 1099    |
+
+*** Amok (Test 2) - Anomaly Detection Metrics (Contd.)
+| Accuracy    | 95.4757% |
+| Error Rate  |  4.5242% |
+| Sensitivity |  2.8464% |
+| Specificity | 99.7930% |
+| Precision   | 28.4645% |
+| Recall      | 89.8588% |
+
+
+** Deauthentication (Test 1)
+*** Deauthentication (Test 1) KNN Parameters
+- Smote.k = 3
+- knn.k = 5
+- smote.perc.over = 150
+- smote.perc.under = 90
+
+*** Deauthentication (Test 1) - Confusion Matrix
+- N = 558,167
+|             | Predicted: NO | Predicted: YES | Total   |
+| Actual: NO  | 512,542       | 42,022         | 554,564 |
+| Actual: YES | 95            | 3,508          | 3,603   |
+| Total       | 512,637       | 45,530         |         |
+
+*** Deauthentication (Test 1) - Anomaly Detection Metrics
+| False Positives | 42,022  |
+| True Positives  | 3,508   |
+| True Negatives  | 512,542 |
+| False Negatives | 95      |
+
+*** Deauthentication (Test 1) - Anomaly Detection Metrics (Contd.)
+| Accuracy    | 92.4544% |
+| Error Rate  |  7.5455% |
+| Sensitivity |  7.7048% |
+| Specificity | 99.9814% |
+| Precision   |  7.7048% |
+| Recall      | 97.3633% |
+
+** Deauthentication (Test 2)
+*** Deauthentication (Test 2) KNN Parameters
+- smote.k = 1
+- knn.k = 1
+- smote.perc.over = 90
+- smote.perc.under = 400
+
+*** Deauthentication (Test 2) - Confusion Matrix
+- N = 558,167
+|             | Predicted: NO | Predicted: YES | Total   |
+| Actual: NO  | 527,780       | 26,784         | 554,564 |
+| Actual: YES | 379           | 3,224          | 3,603   |
+| Total       | 528,159       | 30,008         |         |
+
+*** Deauthentication (Test 2) - Anomaly Detection Metrics
+| False Positives | 26,784  |
+| True Positives  | 3,224   |
+| True Negatives  | 527,780 |
+| False Negatives | 379     |
+
+*** Deauthentication (Test 2) - Anomaly Detection Metrics (Contd.)
+| Accuracy    | 95.1335% |
+| Error Rate  |  4.8664% |
+| Sensitivity | 10.7438% |
+| Specificity | 99.9282% |
+| Precision   | 10.7438% |
+| Recall      | 89.4809% |
+
+
+** Authentication Request (Test 1)
+*** Authentication Request (Test 1) KNN Parameters
+- Smote.k = 3
+- knn.k = 5
+- smote.perc.over = 150
+- smote.perc.under = 90
+
+*** Authentication Request (Test 1) - Anomaly Detection Metrics
+- N = 555,805
+|             | Predicted: NO | Predicted: YES | Total   |
+| Actual: NO  | 513,668       | 40,945         | 554,613 |
+| Actual: YES | 31            | 1,161          | 1,192   |
+| Total       | 513,699       | 42,106         |         |
+
+** Authentication Request (Test 1) - Anomaly Detection Metrics
+| False Positives | 40,945  |
+| True Positives  | 1,161   |
+| True Negatives  | 513,668 |
+| False Negatives | 31      |
+
+** Authentication Request (Test 1) - Anomaly Detection Metrics (Contd.)
+| Accuracy    | 92.6276% |
+| Error Rate  |  7.3723% |
+| Sensitivity |  2.7573% |
+| Specificity | 99.9939% |
+| Precision   |  2.7573% |
+| Recall      | 97.3993% |
+
+** Authentication Request (Test 2)
+*** Authentication Request (Test 2) KNN Parameters
+- Smote.k = 1
+- knn.k = 1
+- smote.perc.over = 100
+- smote.perc.under = 300
+
+*** Authentication Request (Test 2) - Anomaly Detection Metrics
+- N = 555,805
+|             | Predicted: NO | Predicted: YES | Total   |
+| Actual: NO  | 540,840       | 13,773         | 554,613 |
+| Actual: YES | 152           | 1,040          | 1,192   |
+| Total       | 540,992       | 14,813         |         |
+
+** Authentication Request (Test 2) - Anomaly Detection Metrics
+| False Positives | 13,773  |
+| True Positives  | 1,040   |
+| True Negatives  | 540,840 |
+| False Negatives | 152     |
+
+** Authentication Request (Test 2) - Anomaly Detection Metrics (Contd.)
+| Accuracy    | 97.4946% |
+| Error Rate  |  2.5053% |
+| Sensitivity |  7.0208% |
+| Specificity | 99.9719% |
+| Precision   |  7.0208% |
+| Recall      | 87.2483% |
+
+* Sources
+| {{{font(4em, Intrusion Detection in 802.11 Networks: Empirical Evaluation of Threats and a Public Dataset)}}} |
+| {{{font(4em, https://en.wikipedia.org/wiki/Address_Resolution_Protocol)}}}                                    |
+
+* Thank You

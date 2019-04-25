@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+    <meta
+      name="author"
+      content="(Paul Webster, Gabriel Madison, Brandon Marlowe, Mirza Baig)"
+    />
+    <style type="text/css">
+      .underline {
+        text-decoration: underline;
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="http://cdn.jsdelivr.net/reveal.js/3.0.0/css/reveal.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="http://cdn.jsdelivr.net/reveal.js/3.0.0/css/theme/league.css"
+      id="theme"
+    />
+
+    <!-- If the query includes 'print-pdf', include the PDF print sheet -->
+    <script>
+      if (window.location.search.match(/print-pdf/gi)) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'http://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/pdf.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+    </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <section id="slide-org21f7d41">
+            <h2 id="org21f7d41">CIS 660 - Final Project</h2>
+          </section>
+        </section>
+        <section>
+          <section id="slide-org3fcd2b8">
+            <h2 id="org3fcd2b8">AWID Anomaly Detection</h2>
+
+            <div class="figure">
+              <p><img src="./images/AWID_box.png" alt="AWID_box.png" /></p>
+            </div>
+          </section>
+        </section>
+        <section>
+          <section id="slide-orgdab611e">
+            <h2 id="orgdab611e">Team</h2>
+            <ul>
+              <li>Paul Webster</li>
+              <li>Gabriel Madison</li>
+              <li>Brandon Marlowe</li>
+              <li>Mirza Baig</li>
+            </ul>
+
+            <aside class="notes">
+              <p>Add speaker notes wherever needed using these tags</p>
+            </aside>
+          </section>
+        </section>
+        <section>
+          <section id="slide-org7f50552">
+            <h2 id="org7f50552">AWID (Aegean Wi-fi Intrusion) Dataset</h2>
+            <div class="outline-text-2" id="text-org7f50552"></div>
+          </section>
+          <section id="slide-org84f38c4">
+            <h3 id="org84f38c4">
+              Dataset produced from real Wireless Network logging
+            </h3>
+          </section>
+          <section id="slide-org801a89f">
+            <h3 id="org801a89f">Full dataset</h3>
+
+            <div class="figure">
+              <p><img src="./images/full_set.png" alt="full_set.png" /></p>
+            </div>
+            <ul>
+              <li>~ 160,000,000 Rows x 155 Columns</li>
+            </ul>
+          </section>
+          <section id="slide-orgfe7a3de">
+            <h3 id="orgfe7a3de">Reduced Training Set Used</h3>
+
+            <div class="figure">
+              <p>
+                <img src="./images/reduced_set.png" alt="reduced_set.png" />
+              </p>
+            </div>
+            <ul>
+              <li>~ 1.8 Million Rows x 155 Columns</li>
+              <li>Produced from 1 hour of logging</li>
+            </ul>
+          </section>
+          <section id="slide-org1536f17">
+            <h3 id="org1536f17">
+              Majority of data is of "normal" class in either dataset
+            </h3>
+          </section>
+        </section>
+        <section>
+          <section id="slide-org621eb3f">
+            <h2 id="org621eb3f">Project Goal</h2>
+            <div class="outline-text-2" id="text-org621eb3f"></div>
+          </section>
+          <section id="slide-orgbf659bb">
+            <h3 id="orgbf659bb">
+              Build a classifier capable of properly classifying tuples with
+              four specific attack types:
+            </h3>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">Amok</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Deauthentication</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Authentication Request</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">ARP</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-orgd4ec7ad">
+            <h3 id="orgd4ec7ad">3 Major Tasks</h3>
+            <ul>
+              <li>Preprocessing/Cleaning</li>
+              <li>Feature Selection</li>
+              <li>Classification</li>
+            </ul>
+          </section>
+        </section>
+        <section>
+          <section id="slide-orgcca2d68">
+            <h2 id="orgcca2d68">About the Attacks</h2>
+            <div class="outline-text-2" id="text-orgcca2d68"></div>
+          </section>
+          <section id="slide-orgcf81f2e">
+            <h3 id="orgcf81f2e">Deauthentication</h3>
+            <div class="outline-text-3" id="text-orgcf81f2e"></div>
+          </section>
+          <section id="slide-orgd383dda">
+            <h4 id="orgd383dda">
+              A Denial of Service attack that uses unprotected deauthentication
+              packets to spoof an entity. The attacker monitors traffic on a
+              network to discover MAC addresses associated with specific
+              clients. A deauthentication message is then sent to the access
+              point on behalf of a particular MAC address, which forces that
+              client off the network. The attacker then connects to the access
+              point as the client that was previously disconnected.
+            </h4>
+          </section>
+          <section id="slide-org664653c">
+            <h3 id="org664653c">Authentication Request</h3>
+            <div class="outline-text-3" id="text-org664653c"></div>
+          </section>
+          <section id="slide-org6625565">
+            <h4 id="org6625565">
+              A type of Flooding Attack -&gt; "In this case the aggressor
+              attempts to exhaust the AP’s resources by causing overflow to its
+              client association table. It is based on the fact that the maximum
+              number of clients which can be maintained in the client AP’s
+              association table is limited and depends either on a hard-coded
+              value on the AP or on its physical memory constraints. An entry on
+              the AP’s client association table is inserted upon the receipt of
+              an Authentication Request message even if the client does not
+              complete its authentication (i.e., is still in the
+              unauthenticated/unassociated state)." - Intrusion Detection in
+              802.11 Networks: Empirical Evaluation of Threats and a Public
+              Dataset
+            </h4>
+          </section>
+          <section id="slide-org30093c3">
+            <h3 id="org30093c3">Amok</h3>
+            <div class="outline-text-3" id="text-org30093c3"></div>
+          </section>
+          <section id="slide-org5911b2f">
+            <h4 id="org5911b2f">
+              Another flooding attack, similar to Authentication Request
+            </h4>
+          </section>
+          <section id="slide-org3f0193b">
+            <h3 id="org3f0193b">ARP (Address Resolution Protocol)</h3>
+            <div class="outline-text-3" id="text-org3f0193b"></div>
+          </section>
+          <section id="slide-org93007e2">
+            <h4 id="org93007e2">
+              "In computer networking, ARP spoofing, ARP cache poisoning, or ARP
+              poison routing, is a technique by which an attacker sends
+              (spoofed) Address Resolution Protocol (ARP) messages onto a local
+              area network. Generally, the aim is to associate the attacker's
+              MAC address with the IP address of another host, such as the
+              default gateway, causing any traffic meant for that IP address to
+              be sent to the attacker instead." - Wikipedia
+            </h4>
+          </section>
+        </section>
+        <section>
+          <section id="slide-org2b9e574">
+            <h2 id="org2b9e574">Preprocessing/Cleaning</h2>
+            <div class="outline-text-2" id="text-org2b9e574"></div>
+          </section>
+          <section id="slide-org627ec40">
+            <h3 id="org627ec40">Starting Point</h3>
+
+            <div class="figure">
+              <p>
+                <img
+                  src="./images/original_dataset.png"
+                  alt="original_dataset.png"
+                />
+              </p>
+            </div>
+          </section>
+          <section id="slide-org6d1636b">
+            <h3 id="org6d1636b">Wireshark Column Names</h3>
+
+            <div class="figure">
+              <p>
+                <img
+                  src="./images/wiresharkawid_attributes.png"
+                  alt="wiresharkawid_attributes.png"
+                />
+              </p>
+            </div>
+          </section>
+          <section id="slide-orge400d74">
+            <h3 id="orge400d74">Adding Wireshark Column Names</h3>
+            <div class="org-src-container">
+              <pre class="src src-shell">
+<span style="color: #8c8c8c;">[</span>FILE: col_names.txt<span style="color: #8c8c8c;">]</span>
+
+frame.interface_id
+frame.dlt
+frame.offset_shift
+
+...
+
+wlan.qos.buf_state_indicated
+data.len
+class
+
+</pre>
+            </div>
+
+            <div class="org-src-container">
+              <pre
+                class="src src-python"
+              ><span style="color: #8197bf;">with</span> <span style="color: #8fbfdc;">open</span><span style="color: #8c8c8c;">(</span>Path<span style="color: #93a8c6;">(</span>resource_dir, <span style="color: #99ad6a;">'col_names.txt'</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span> <span style="color: #8197bf;">as</span> cols_fp:
+    <span style="color: #8197bf;">for</span> line_num, name <span style="color: #8197bf;">in</span> <span style="color: #8fbfdc;">enumerate</span><span style="color: #8c8c8c;">(</span>cols_fp<span style="color: #8c8c8c;">)</span>:
+        col_names.append<span style="color: #8c8c8c;">(</span>name.rstrip<span style="color: #93a8c6;">()</span><span style="color: #8c8c8c;">)</span>
+
+<span style="color: #cf6a4c;">data.columns</span> = col_names
+</pre>
+            </div>
+          </section>
+          <section id="slide-orgb3e2f32">
+            <h3 id="orgb3e2f32">After Appending Column Names</h3>
+
+            <div class="figure">
+              <p>
+                <img src="./images/cols_appended.png" alt="cols_appended.png" />
+              </p>
+            </div>
+          </section>
+          <section id="slide-orga4ab8b2">
+            <h3 id="orga4ab8b2">
+              Dropped columns not listed on course webpage
+            </h3>
+          </section>
+          <section id="slide-org98d533e">
+            <h3 id="org98d533e">
+              Replaced ‘?’ with NaN values, then dropped columns with over 60%
+              NaN values
+            </h3>
+            <ul>
+              <li>removed 7 columns</li>
+            </ul>
+            <div class="org-src-container">
+              <pre class="src src-python">
+...
+
+<span style="color: #cf6a4c;">data</span> = data.replace<span style="color: #8c8c8c;">(</span><span style="color: #99ad6a;">'?'</span>, np.nan<span style="color: #8c8c8c;">)</span>
+
+...
+
+<span style="color: #888888; font-style: italic;"># </span><span style="color: #888888; font-style: italic;">If over 60% of the values in a column is null, remove it</span>
+<span style="color: #cf6a4c;">prev_num_cols</span> = <span style="color: #8fbfdc;">len</span><span style="color: #8c8c8c;">(</span>data.columns<span style="color: #8c8c8c;">)</span>
+data.dropna<span style="color: #8c8c8c;">(</span>axis=<span style="color: #99ad6a;">'columns'</span>, thresh=<span style="color: #8fbfdc;">len</span><span style="color: #93a8c6;">(</span>data.index<span style="color: #93a8c6;">)</span> * <span style="color: #447799;">0</span>.<span style="color: #447799;">40</span>, inplace=<span style="color: #447799;">True</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #8197bf;">print</span><span style="color: #8c8c8c;">(</span><span style="color: #99ad6a;">"Removed "</span> + <span style="color: #8fbfdc;">str</span><span style="color: #93a8c6;">(</span>prev_num_cols - <span style="color: #8fbfdc;">len</span><span style="color: #b0b1a3;">(</span>data.columns<span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span> +
+      <span style="color: #99ad6a;">" columns with all NaN values."</span><span style="color: #8c8c8c;">)</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-orgb8308af">
+            <h3 id="orgb8308af">
+              Drop the columns that have over 50% of its values as constant
+            </h3>
+            <div class="org-src-container">
+              <pre
+                class="src src-python"
+              ><span style="color: #8197bf;">for</span> col <span style="color: #8197bf;">in</span> data:
+    <span style="color: #8197bf;">if</span> data<span style="color: #8c8c8c;">[</span>col<span style="color: #8c8c8c;">]</span>.nunique<span style="color: #8c8c8c;">()</span> &gt;= <span style="color: #8c8c8c;">(</span><span style="color: #8fbfdc;">len</span><span style="color: #93a8c6;">(</span>data.index<span style="color: #93a8c6;">)</span> * <span style="color: #447799;">0</span>.<span style="color: #447799;">50</span><span style="color: #8c8c8c;">)</span>:
+        cols_to_drop.append<span style="color: #8c8c8c;">(</span>col<span style="color: #8c8c8c;">)</span>
+
+data.drop<span style="color: #8c8c8c;">(</span>columns=cols_to_drop, inplace=<span style="color: #447799;">True</span><span style="color: #8c8c8c;">)</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-org91f6ba9">
+            <h3 id="org91f6ba9">
+              Drop the rows with at least one NaN value in it
+            </h3>
+            <ul>
+              <li>~ 2000 rows</li>
+            </ul>
+            <div class="org-src-container">
+              <pre
+                class="src src-python"
+              >data.dropna<span style="color: #8c8c8c;">(</span>inplace=<span style="color: #447799;">True</span><span style="color: #8c8c8c;">)</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-org420149d">
+            <h3 id="org420149d">
+              Output the relatively clean data to a new file
+            </h3>
+            <div class="org-src-container">
+              <pre
+                class="src src-python"
+              ><span style="color: #888888; font-style: italic;"># </span><span style="color: #888888; font-style: italic;">Output the minimized and preprocessed dataset to a ZIP file</span>
+<span style="color: #888888; font-style: italic;"># </span><span style="color: #888888; font-style: italic;">(with no index column added)</span>
+data.to_csv<span style="color: #8c8c8c;">(</span>
+    Path<span style="color: #93a8c6;">(</span>resource_dir, <span style="color: #99ad6a;">'preproc_dataset.zip'</span><span style="color: #93a8c6;">)</span>,
+    sep=<span style="color: #99ad6a;">','</span>,
+    index=<span style="color: #447799;">False</span>,
+    compression=<span style="color: #99ad6a;">'zip'</span><span style="color: #8c8c8c;">)</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-org6208205">
+            <h3 id="org6208205">
+              Perform min-max normalization on attributes used for
+              classification (range 0-1)
+            </h3>
+            <div class="org-src-container">
+              <pre
+                class="src src-R"
+              ><span style="color: #fad07a;">normalize</span> <span style="color: #447799;">&lt;-</span> <span style="color: #8197bf;">function</span><span style="color: #8c8c8c;">(</span>x<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">{</span> <span style="color: #8197bf;">return</span> <span style="color: #93a8c6;">(</span><span style="color: #b0b1a3;">(</span>x - min<span style="color: #97b098;">(</span>x<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span> / <span style="color: #b0b1a3;">(</span>max<span style="color: #97b098;">(</span>x<span style="color: #97b098;">)</span> - min<span style="color: #97b098;">(</span>x<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>  <span style="color: #8c8c8c;">}</span>
+
+...
+
+wifiLog2$wlan.fc.type=normalize<span style="color: #8c8c8c;">(</span>as.numeric<span style="color: #93a8c6;">(</span>wifiLog2$wlan.fc.type<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+
+wifiLog2$frame.time_delta_displayed=normalize<span style="color: #8c8c8c;">(</span>as.numeric<span style="color: #93a8c6;">(</span>
+    wifiLog2$frame.time_delta_displayed
+<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+
+wifiLog2$wlan.duration=normalize<span style="color: #8c8c8c;">(</span>as.numeric<span style="color: #93a8c6;">(</span>wifiLog2$wlan.duration<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+View<span style="color: #8c8c8c;">(</span>wifiLog2<span style="color: #8c8c8c;">)</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-org1d31bb0">
+            <h3 id="org1d31bb0">Normalization Output</h3>
+
+            <div class="figure">
+              <p>
+                <img src="./images/view_wifilog2.png" alt="view_wifilog2.png" />
+              </p>
+            </div>
+          </section>
+        </section>
+        <section>
+          <section id="slide-orgf05b694">
+            <h2 id="orgf05b694">Feature Selection</h2>
+            <div class="outline-text-2" id="text-orgf05b694"></div>
+          </section>
+          <section id="slide-orgd7d826f">
+            <h3 id="orgd7d826f">We attempted PCA, but ran out of memory</h3>
+            <p class="fragment (appear)">
+              &#x2026;even on CSU's Big Data Servers
+            </p>
+          </section>
+          <section id="slide-org24d654b">
+            <h3 id="org24d654b">
+              We examined distinct values in remaining columns, and chose those
+              with more distinct values for the normal class value than the
+              attack class values
+            </h3>
+          </section>
+          <section id="slide-orge332fe9">
+            <h3 id="orge332fe9">Using a little SQL magic&#x2026;</h3>
+            <div class="org-src-container">
+              <pre
+                class="src src-sql"
+              ><span style="color: #8197bf;">select</span> <span style="color: #8fbfdc;">count</span><span style="color: #8c8c8c;">(</span><span style="color: #8197bf;">DISTINCT</span><span style="color: #93a8c6;">(</span>wlan_fc_moredata<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+  <span style="color: #8197bf;">from</span> AWID_REMOVED_NULL <span style="color: #8197bf;">where</span> <span style="color: #8197bf;">class</span>=<span style="color: #99ad6a;">'normal'</span>
+
+<span style="color: #8197bf;">select</span> <span style="color: #8fbfdc;">count</span><span style="color: #8c8c8c;">(</span><span style="color: #8197bf;">DISTINCT</span><span style="color: #93a8c6;">(</span>wlan_fc_moredata<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+  <span style="color: #8197bf;">from</span> AWID_REMOVED_NULL <span style="color: #8197bf;">where</span> <span style="color: #8197bf;">class</span>=<span style="color: #99ad6a;">'arp'</span>
+
+<span style="color: #8197bf;">select</span> <span style="color: #8fbfdc;">count</span><span style="color: #8c8c8c;">(</span><span style="color: #8197bf;">DISTINCT</span><span style="color: #93a8c6;">(</span>wlan_fc_moredata<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+  <span style="color: #8197bf;">from</span> AWID_REMOVED_NULL <span style="color: #8197bf;">where</span> <span style="color: #8197bf;">class</span>=<span style="color: #99ad6a;">'amok'</span>
+
+<span style="color: #8197bf;">select</span> <span style="color: #8fbfdc;">count</span><span style="color: #8c8c8c;">(</span><span style="color: #8197bf;">DISTINCT</span><span style="color: #93a8c6;">(</span>wlan_fc_moredata<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+  <span style="color: #8197bf;">from</span> AWID_REMOVED_NULL <span style="color: #8197bf;">where</span> <span style="color: #8197bf;">class</span>=<span style="color: #99ad6a;">'authentication_request'</span>
+
+<span style="color: #8197bf;">select</span> <span style="color: #8fbfdc;">count</span><span style="color: #8c8c8c;">(</span><span style="color: #8197bf;">DISTINCT</span><span style="color: #93a8c6;">(</span>wlan_fc_moredata<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+  <span style="color: #8197bf;">from</span> AWID_REMOVED_NULL <span style="color: #8197bf;">where</span> <span style="color: #8197bf;">class</span>=<span style="color: #99ad6a;">'deauthentication'</span>
+
+<span style="color: #8197bf;">select</span> wlan_fc_moredata
+  <span style="color: #8197bf;">from</span> AWID_REMOVED_NULL <span style="color: #8197bf;">where</span> <span style="color: #8197bf;">class</span>=<span style="color: #99ad6a;">'normal'</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-org796d310">
+            <h3 id="org796d310">
+              Then, chose the following 3 columns for our analysis:
+            </h3>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">wlan.fc.type</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">frame.time_delta_displayed</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">wlan.duration</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+        <section>
+          <section id="slide-orgd63e8a7">
+            <h2 id="orgd63e8a7">Classification</h2>
+          </section>
+          <section id="slide-org81bd97b">
+            <h3 id="org81bd97b">Isolated the attack types</h3>
+            <div class="org-src-container">
+              <pre class="src src-R">
+ ...
+
+ ATTACKTYPE<span style="color: #447799;">&lt;-</span><span style="color: #99ad6a;">"amok"</span>
+
+ <span style="color: #888888; font-style: italic;"># </span><span style="color: #888888; font-style: italic;">Keep only the target class and the normal packets</span>
+ wifiLog2<span style="color: #447799;">&lt;-</span>wifiLog2<span style="color: #8c8c8c;">[</span>wifiLog2$class==<span style="color: #99ad6a;">"normal"</span> | wifiLog2$class==ATTACKTYPE, <span style="color: #8c8c8c;">]</span>
+
+ wifiLog2$class<span style="color: #447799;">&lt;-</span>as.character<span style="color: #8c8c8c;">(</span>wifiLog2$class<span style="color: #8c8c8c;">)</span>
+ wifiLog2$class<span style="color: #8c8c8c;">[</span>wifiLog2$class==<span style="color: #99ad6a;">"normal"</span><span style="color: #8c8c8c;">]</span><span style="color: #447799;">&lt;-</span>as.character<span style="color: #8c8c8c;">(</span><span style="color: #99ad6a;">"0"</span><span style="color: #8c8c8c;">)</span>
+ wifiLog2$class<span style="color: #8c8c8c;">[</span>wifiLog2$class==ATTACKTYPE<span style="color: #8c8c8c;">]</span><span style="color: #447799;">&lt;-</span>as.character<span style="color: #8c8c8c;">(</span><span style="color: #99ad6a;">"1"</span><span style="color: #8c8c8c;">)</span>
+ wifiLog2$class<span style="color: #447799;">&lt;-</span>as.factor<span style="color: #8c8c8c;">(</span>wifiLog2$class<span style="color: #8c8c8c;">)</span>
+
+...
+
+</pre>
+            </div>
+          </section>
+          <section id="slide-org0d4854f">
+            <h3 id="org0d4854f">Separate files to handle each attack type</h3>
+
+            <div class="figure">
+              <p>
+                <img
+                  src="./images/KNN_file_names.png"
+                  alt="KNN_file_names.png"
+                />
+              </p>
+            </div>
+          </section>
+          <section id="slide-org0c4d551">
+            <h3 id="org0c4d551">
+              Partitioned dataset into 66.6% training data and 33.3% test data
+            </h3>
+            <div class="org-src-container">
+              <pre
+                class="src src-R"
+              >smp_size <span style="color: #447799;">&lt;-</span> floor<span style="color: #8c8c8c;">(</span><span style="color: #447799;">0.66</span> * nrow<span style="color: #93a8c6;">(</span>wifiLog2<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-orga82cd2f">
+            <h3 id="orga82cd2f">Performed SMOTE on training data</h3>
+            <ul>
+              <li>To create synthetic tuples of attack types</li>
+            </ul>
+            <div class="org-src-container">
+              <pre
+                class="src src-R"
+              >f<span style="color: #447799;">&lt;-</span>formula<span style="color: #8c8c8c;">(</span><span style="color: #99ad6a;">"class~wlan.fc.type+frame.time_delta_displayed+wlan.duration"</span><span style="color: #8c8c8c;">)</span>
+train_smote<span style="color: #447799;">&lt;-</span>SMOTE<span style="color: #8c8c8c;">(</span>f,train,perc.over=<span style="color: #447799;">150</span>,perc.under=<span style="color: #447799;">90</span>,k=<span style="color: #447799;">3</span><span style="color: #8c8c8c;">)</span>
+View<span style="color: #8c8c8c;">(</span>train_smote<span style="color: #8c8c8c;">)</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-org0ad555e">
+            <h3 id="org0ad555e">
+              K-Nearest Neighbor classifier to train model for each specific
+              attack type
+            </h3>
+            <div class="org-src-container">
+              <pre
+                class="src src-R"
+              >m<span style="color: #447799;">&lt;-</span>kNN<span style="color: #8c8c8c;">(</span>f,train_smote,test_oversamp,norm=<span style="color: #ffb964;">FALSE</span>,k=<span style="color: #447799;">5</span><span style="color: #8c8c8c;">)</span>
+</pre>
+            </div>
+          </section>
+          <section id="slide-orga4cc2cc">
+            <h3 id="orga4cc2cc">
+              Made predictions using the model on the test dataset
+            </h3>
+          </section>
+        </section>
+        <section>
+          <section id="slide-org0915077">
+            <h2 id="org0915077">Parameter Selection/Interpretation</h2>
+            <div class="outline-text-2" id="text-org0915077"></div>
+          </section>
+          <section id="slide-org2109957">
+            <h3 id="org2109957">
+              Recall - “completeness – what % of positive tuples did the
+              classifier label as positive?”
+            </h3>
+
+            <div class="figure">
+              <p><img src="./images/recall_eq.PNG" alt="recall_eq.PNG" /></p>
+            </div>
+          </section>
+          <section id="slide-org09f6f51">
+            <h3 id="org09f6f51">
+              Precision - “exactness – what % of tuples that the classifier
+              labeled as positive are actually positive”
+            </h3>
+
+            <div class="figure">
+              <p>
+                <img src="./images/precision_eq.PNG" alt="precision_eq.PNG" />
+              </p>
+            </div>
+          </section>
+          <section id="slide-orgd184bbe">
+            <h3 id="orgd184bbe">
+              Recall and precision are inversely related measures, meaning as
+              precision increases, recall decreases.
+            </h3>
+          </section>
+          <section id="slide-org1116281">
+            <h3 id="org1116281">
+              Accuracy and recall are inversely related in our case (for a
+              majority of our data)
+            </h3>
+          </section>
+        </section>
+        <section>
+          <section id="slide-org4eb7c3a">
+            <h2 id="org4eb7c3a">Results</h2>
+            <ul>
+              <li class="fragment appear">
+                Performed multiple tests for each attack
+              </li>
+            </ul>
+          </section>
+          <section id="slide-orga4c17e0">
+            <h3 id="orga4c17e0">ARP (Address Resolution Protocol) (Test 1)</h3>
+            <div class="outline-text-3" id="text-orga4c17e0"></div>
+          </section>
+          <section id="slide-org78b0f42">
+            <h4 id="org78b0f42">ARP (Test 1) KNN Parameters</h4>
+            <ul>
+              <li>Smote.k = 3</li>
+              <li>knn.k = 5</li>
+              <li>smote.perc.over = 150</li>
+              <li>smote.perc.under = 90</li>
+            </ul>
+          </section>
+          <section id="slide-org115fbbe">
+            <h4 id="org115fbbe">ARP (Test 1) - Confusion Matrix</h4>
+            <ul>
+              <li>N = 576,582</li>
+            </ul>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">&#xa0;</td>
+                  <td class="org-left">Predicted: NO</td>
+                  <td class="org-left">Predicted: YES</td>
+                  <td class="org-left">Total</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: NO</td>
+                  <td class="org-left">552,958</td>
+                  <td class="org-left">1,731</td>
+                  <td class="org-left">554,689</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: YES</td>
+                  <td class="org-left">4</td>
+                  <td class="org-left">21,889</td>
+                  <td class="org-left">21,893</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Total</td>
+                  <td class="org-left">552,962</td>
+                  <td class="org-left">23,620</td>
+                  <td class="org-left">&#xa0;</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org2c9a964">
+            <h4 id="org2c9a964">ARP (Test 1) - Anomaly Detection Metrics</h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">False Positives</td>
+                  <td class="org-left">1,731</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Positives</td>
+                  <td class="org-left">21,889</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Negatives</td>
+                  <td class="org-left">552,958</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">False Negatives</td>
+                  <td class="org-left">4</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-orgcc4aa0a">
+            <h4 id="orgcc4aa0a">
+              ARP (Test 1) - Anomaly Detection Metrics (Contd.)
+            </h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-right" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">Accuracy</td>
+                  <td class="org-right">99.6990%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Error Rate</td>
+                  <td class="org-right">0.3009%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Sensitivity</td>
+                  <td class="org-right">92.6714%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Specificity</td>
+                  <td class="org-right">99.9992%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Precision</td>
+                  <td class="org-right">92.6714%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Recall</td>
+                  <td class="org-right">99.9817%</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-orgff33e0c">
+            <h3 id="orgff33e0c">Only one set of results with ARP</h3>
+            <ul>
+              <li>Too many errors using other settings</li>
+              <li>Difficult to improve on already extremely good results</li>
+            </ul>
+          </section>
+          <section id="slide-org8d4072d">
+            <h3 id="org8d4072d">Amok (Test 1)</h3>
+            <div class="outline-text-3" id="text-org8d4072d"></div>
+          </section>
+          <section id="slide-orgcc1c48c">
+            <h4 id="orgcc1c48c">Amok (Test 1) KNN Parameters</h4>
+            <ul>
+              <li>Smote.k = 3</li>
+              <li>knn.k = 5</li>
+              <li>smote.perc.over = 150</li>
+              <li>smote.perc.under = 90</li>
+            </ul>
+          </section>
+          <section id="slide-orgf2100d8">
+            <h4 id="orgf2100d8">Amok (Test 1) - Confusion Matrix</h4>
+            <ul>
+              <li>N = 565,216</li>
+            </ul>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">&#xa0;</td>
+                  <td class="org-left">Predicted: NO</td>
+                  <td class="org-left">Predicted: YES</td>
+                  <td class="org-left">Total</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: NO</td>
+                  <td class="org-left">511,451</td>
+                  <td class="org-left">42,928</td>
+                  <td class="org-left">554,379</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: YES</td>
+                  <td class="org-left">562</td>
+                  <td class="org-left">10,275</td>
+                  <td class="org-left">10,837</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Total</td>
+                  <td class="org-left">512,013</td>
+                  <td class="org-left">53,203</td>
+                  <td class="org-left">&#xa0;</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-orgfe9f216">
+            <h4 id="orgfe9f216">Amok (Test 1) - Anomaly Detection Metrics</h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">False Positives</td>
+                  <td class="org-left">42,928</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Positives</td>
+                  <td class="org-left">10,275</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Negatives</td>
+                  <td class="org-left">511,451</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">False Negatives</td>
+                  <td class="org-left">562</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org3224834">
+            <h4 id="org3224834">
+              Amok (Test 1) - Anomaly Detection Metrics (Contd.)
+            </h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-right" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">Accuracy</td>
+                  <td class="org-right">92.3056%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Error Rate</td>
+                  <td class="org-right">7.6944%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Sensitivity</td>
+                  <td class="org-right">19.3128%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Specificity</td>
+                  <td class="org-right">99.8902%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Precision</td>
+                  <td class="org-right">19.3128%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Recall</td>
+                  <td class="org-right">94.8140%</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org48cf742">
+            <h3 id="org48cf742">Amok (Test 2)</h3>
+            <div class="outline-text-3" id="text-org48cf742"></div>
+          </section>
+          <section id="slide-org0cfa4a2">
+            <h4 id="org0cfa4a2">Amok (Test 2) KNN Parameters</h4>
+            <ul>
+              <li>smote.k = 1</li>
+              <li>knn.k = 1</li>
+              <li>smote.perc.over = 120</li>
+              <li>smote.perc.under = 200</li>
+            </ul>
+          </section>
+          <section id="slide-orgdb45a48">
+            <h4 id="orgdb45a48">Amok (Test 2) - Confusion Matrix</h4>
+            <ul>
+              <li>N = 565,216</li>
+            </ul>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">&#xa0;</td>
+                  <td class="org-left">Predicted: NO</td>
+                  <td class="org-left">Predicted: YES</td>
+                  <td class="org-left">Total</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: NO</td>
+                  <td class="org-left">529,906</td>
+                  <td class="org-left">24,473</td>
+                  <td class="org-left">554,379</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: YES</td>
+                  <td class="org-left">1099</td>
+                  <td class="org-left">9,738</td>
+                  <td class="org-left">10,837</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Total</td>
+                  <td class="org-left">531,005</td>
+                  <td class="org-left">34,211</td>
+                  <td class="org-left">&#xa0;</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-orge7c0aba">
+            <h4 id="orge7c0aba">Amok (Test 2) - Anomaly Detection Metrics</h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">False Positives</td>
+                  <td class="org-left">24,473</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Positives</td>
+                  <td class="org-left">9,738</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Negatives</td>
+                  <td class="org-left">529,906</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">False Negatives</td>
+                  <td class="org-left">1099</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org07a87c6">
+            <h4 id="org07a87c6">
+              Amok (Test 2) - Anomaly Detection Metrics (Contd.)
+            </h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-right" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">Accuracy</td>
+                  <td class="org-right">95.4757%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Error Rate</td>
+                  <td class="org-right">4.5242%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Sensitivity</td>
+                  <td class="org-right">2.8464%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Specificity</td>
+                  <td class="org-right">99.7930%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Precision</td>
+                  <td class="org-right">28.4645%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Recall</td>
+                  <td class="org-right">89.8588%</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org4a86a48">
+            <h3 id="org4a86a48">Deauthentication (Test 1)</h3>
+            <div class="outline-text-3" id="text-org4a86a48"></div>
+          </section>
+          <section id="slide-orgf3d73b9">
+            <h4 id="orgf3d73b9">Deauthentication (Test 1) KNN Parameters</h4>
+            <ul>
+              <li>Smote.k = 3</li>
+              <li>knn.k = 5</li>
+              <li>smote.perc.over = 150</li>
+              <li>smote.perc.under = 90</li>
+            </ul>
+          </section>
+          <section id="slide-org974009e">
+            <h4 id="org974009e">
+              Deauthentication (Test 1) - Confusion Matrix
+            </h4>
+            <ul>
+              <li>N = 558,167</li>
+            </ul>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">&#xa0;</td>
+                  <td class="org-left">Predicted: NO</td>
+                  <td class="org-left">Predicted: YES</td>
+                  <td class="org-left">Total</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: NO</td>
+                  <td class="org-left">512,542</td>
+                  <td class="org-left">42,022</td>
+                  <td class="org-left">554,564</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: YES</td>
+                  <td class="org-left">95</td>
+                  <td class="org-left">3,508</td>
+                  <td class="org-left">3,603</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Total</td>
+                  <td class="org-left">512,637</td>
+                  <td class="org-left">45,530</td>
+                  <td class="org-left">&#xa0;</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org5a1ec1e">
+            <h4 id="org5a1ec1e">
+              Deauthentication (Test 1) - Anomaly Detection Metrics
+            </h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">False Positives</td>
+                  <td class="org-left">42,022</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Positives</td>
+                  <td class="org-left">3,508</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Negatives</td>
+                  <td class="org-left">512,542</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">False Negatives</td>
+                  <td class="org-left">95</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-orgdb49361">
+            <h4 id="orgdb49361">
+              Deauthentication (Test 1) - Anomaly Detection Metrics (Contd.)
+            </h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-right" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">Accuracy</td>
+                  <td class="org-right">92.4544%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Error Rate</td>
+                  <td class="org-right">7.5455%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Sensitivity</td>
+                  <td class="org-right">7.7048%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Specificity</td>
+                  <td class="org-right">99.9814%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Precision</td>
+                  <td class="org-right">7.7048%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Recall</td>
+                  <td class="org-right">97.3633%</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org249f0bf">
+            <h3 id="org249f0bf">Deauthentication (Test 2)</h3>
+            <div class="outline-text-3" id="text-org249f0bf"></div>
+          </section>
+          <section id="slide-org0a60daf">
+            <h4 id="org0a60daf">Deauthentication (Test 2) KNN Parameters</h4>
+            <ul>
+              <li>smote.k = 1</li>
+              <li>knn.k = 1</li>
+              <li>smote.perc.over = 90</li>
+              <li>smote.perc.under = 400</li>
+            </ul>
+          </section>
+          <section id="slide-orgaf9cc68">
+            <h4 id="orgaf9cc68">
+              Deauthentication (Test 2) - Confusion Matrix
+            </h4>
+            <ul>
+              <li>N = 558,167</li>
+            </ul>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">&#xa0;</td>
+                  <td class="org-left">Predicted: NO</td>
+                  <td class="org-left">Predicted: YES</td>
+                  <td class="org-left">Total</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: NO</td>
+                  <td class="org-left">527,780</td>
+                  <td class="org-left">26,784</td>
+                  <td class="org-left">554,564</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: YES</td>
+                  <td class="org-left">379</td>
+                  <td class="org-left">3,224</td>
+                  <td class="org-left">3,603</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Total</td>
+                  <td class="org-left">528,159</td>
+                  <td class="org-left">30,008</td>
+                  <td class="org-left">&#xa0;</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-orgdd4afeb">
+            <h4 id="orgdd4afeb">
+              Deauthentication (Test 2) - Anomaly Detection Metrics
+            </h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">False Positives</td>
+                  <td class="org-left">26,784</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Positives</td>
+                  <td class="org-left">3,224</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Negatives</td>
+                  <td class="org-left">527,780</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">False Negatives</td>
+                  <td class="org-left">379</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org4a4ff4b">
+            <h4 id="org4a4ff4b">
+              Deauthentication (Test 2) - Anomaly Detection Metrics (Contd.)
+            </h4>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-right" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">Accuracy</td>
+                  <td class="org-right">95.1335%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Error Rate</td>
+                  <td class="org-right">4.8664%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Sensitivity</td>
+                  <td class="org-right">10.7438%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Specificity</td>
+                  <td class="org-right">99.9282%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Precision</td>
+                  <td class="org-right">10.7438%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Recall</td>
+                  <td class="org-right">89.4809%</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org2c226e5">
+            <h3 id="org2c226e5">Authentication Request (Test 1)</h3>
+            <div class="outline-text-3" id="text-org2c226e5"></div>
+          </section>
+          <section id="slide-org4039731">
+            <h4 id="org4039731">
+              Authentication Request (Test 1) KNN Parameters
+            </h4>
+            <ul>
+              <li>Smote.k = 3</li>
+              <li>knn.k = 5</li>
+              <li>smote.perc.over = 150</li>
+              <li>smote.perc.under = 90</li>
+            </ul>
+          </section>
+          <section id="slide-orgce33e47">
+            <h4 id="orgce33e47">
+              Authentication Request (Test 1) - Anomaly Detection Metrics
+            </h4>
+            <ul>
+              <li>N = 555,805</li>
+            </ul>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">&#xa0;</td>
+                  <td class="org-left">Predicted: NO</td>
+                  <td class="org-left">Predicted: YES</td>
+                  <td class="org-left">Total</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: NO</td>
+                  <td class="org-left">513,668</td>
+                  <td class="org-left">40,945</td>
+                  <td class="org-left">554,613</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: YES</td>
+                  <td class="org-left">31</td>
+                  <td class="org-left">1,161</td>
+                  <td class="org-left">1,192</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Total</td>
+                  <td class="org-left">513,699</td>
+                  <td class="org-left">42,106</td>
+                  <td class="org-left">&#xa0;</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org4faaf22">
+            <h3 id="org4faaf22">
+              Authentication Request (Test 1) - Anomaly Detection Metrics
+            </h3>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">False Positives</td>
+                  <td class="org-left">40,945</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Positives</td>
+                  <td class="org-left">1,161</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Negatives</td>
+                  <td class="org-left">513,668</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">False Negatives</td>
+                  <td class="org-left">31</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org0f8766b">
+            <h3 id="org0f8766b">
+              Authentication Request (Test 1) - Anomaly Detection Metrics
+              (Contd.)
+            </h3>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-right" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">Accuracy</td>
+                  <td class="org-right">92.6276%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Error Rate</td>
+                  <td class="org-right">7.3723%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Sensitivity</td>
+                  <td class="org-right">2.7573%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Specificity</td>
+                  <td class="org-right">99.9939%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Precision</td>
+                  <td class="org-right">2.7573%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Recall</td>
+                  <td class="org-right">97.3993%</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org077f4a4">
+            <h3 id="org077f4a4">Authentication Request (Test 2)</h3>
+            <div class="outline-text-3" id="text-org077f4a4"></div>
+          </section>
+          <section id="slide-org5a827b1">
+            <h4 id="org5a827b1">
+              Authentication Request (Test 2) KNN Parameters
+            </h4>
+            <ul>
+              <li>Smote.k = 1</li>
+              <li>knn.k = 1</li>
+              <li>smote.perc.over = 100</li>
+              <li>smote.perc.under = 300</li>
+            </ul>
+          </section>
+          <section id="slide-org236b859">
+            <h4 id="org236b859">
+              Authentication Request (Test 2) - Anomaly Detection Metrics
+            </h4>
+            <ul>
+              <li>N = 555,805</li>
+            </ul>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">&#xa0;</td>
+                  <td class="org-left">Predicted: NO</td>
+                  <td class="org-left">Predicted: YES</td>
+                  <td class="org-left">Total</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: NO</td>
+                  <td class="org-left">540,840</td>
+                  <td class="org-left">13,773</td>
+                  <td class="org-left">554,613</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Actual: YES</td>
+                  <td class="org-left">152</td>
+                  <td class="org-left">1,040</td>
+                  <td class="org-left">1,192</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Total</td>
+                  <td class="org-left">540,992</td>
+                  <td class="org-left">14,813</td>
+                  <td class="org-left">&#xa0;</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-orgbb4c4bd">
+            <h3 id="orgbb4c4bd">
+              Authentication Request (Test 2) - Anomaly Detection Metrics
+            </h3>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">False Positives</td>
+                  <td class="org-left">13,773</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Positives</td>
+                  <td class="org-left">1,040</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">True Negatives</td>
+                  <td class="org-left">540,840</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">False Negatives</td>
+                  <td class="org-left">152</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section id="slide-org32eb7b6">
+            <h3 id="org32eb7b6">
+              Authentication Request (Test 2) - Anomaly Detection Metrics
+              (Contd.)
+            </h3>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+
+                <col class="org-right" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">Accuracy</td>
+                  <td class="org-right">97.4946%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Error Rate</td>
+                  <td class="org-right">2.5053%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Sensitivity</td>
+                  <td class="org-right">7.0208%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Specificity</td>
+                  <td class="org-right">99.9719%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Precision</td>
+                  <td class="org-right">7.0208%</td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">Recall</td>
+                  <td class="org-right">87.2483%</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+        <section>
+          <section id="slide-org47c7b6b">
+            <h2 id="org47c7b6b">Sources</h2>
+            <table
+              border="2"
+              cellspacing="0"
+              cellpadding="6"
+              rules="groups"
+              frame="hsides"
+            >
+              <colgroup>
+                <col class="org-left" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td class="org-left">
+                    <font size="4em">
+                      Intrusion Detection in 802.11 Networks: Empirical
+                      Evaluation of Threats and a Public Dataset</font
+                    >
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="org-left">
+                    <font size="4em">
+                      https://en.wikipedia.org/wiki/Address_Resolution_Protocol</font
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+        <section>
+          <section id="slide-orgb059bbc">
+            <h2 id="orgb059bbc">Thank You</h2>
+          </section>
+        </section>
+      </div>
+    </div>
+    <script src="http://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/head.min.js"></script>
+    <script src="http://cdn.jsdelivr.net/reveal.js/3.0.0/js/reveal.js"></script>
+
+    <script>
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: false,
+        center: true,
+        slideNumber: 'c',
+        rollingLinks: false,
+        keyboard: true,
+        overview: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'convex', // default/cube/page/concave/zoom/linear/fade/none
+        transitionSpeed: 'default',
+        multiplex: {
+          secret: '', // null if client
+          id: '', // id, obtained from socket.io server
+          url: '', // Location of socket.io server
+        },
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          {
+            src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/classList.js',
+            condition: function() {
+              return !document.body.classList;
+            },
+          },
+          {
+            src:
+              'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/markdown/marked.js',
+            condition: function() {
+              return !!document.querySelector('[data-markdown]');
+            },
+          },
+          {
+            src:
+              'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/markdown/markdown.js',
+            condition: function() {
+              return !!document.querySelector('[data-markdown]');
+            },
+          },
+          {
+            src:
+              'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/zoom-js/zoom.js',
+            async: true,
+            condition: function() {
+              return !!document.body.classList;
+            },
+          },
+          {
+            src:
+              'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/notes/notes.js',
+            async: true,
+            condition: function() {
+              return !!document.body.classList;
+            },
+          },
+        ],
+      });
+    </script>
+  </body>
+</html>
